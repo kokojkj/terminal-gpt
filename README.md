@@ -1,5 +1,5 @@
 Terminal-GPT - Your peer chat companion in the terminal.
-Terminal-GPT is a tool to make chatgpt fit into terminal cool enviroment
+Terminal-GPT is a tool to make chatgpt fit into cool terminal enviroment
 
 it has very clear options and easy to use
 
