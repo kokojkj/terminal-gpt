@@ -20,3 +20,8 @@ and config commands is
 
 - (i know that my api key is revealed and i will revoke it as soon as i get my doublons )
 - (this project is done by some help from ai )
+
+edit : api key is revoked now you will need to use your api key 
+you can get it for free if you teenager from hack club !
+through OpenAI Genie bot
+else you can buy it from OpenAI
