@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal-GPT</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"/>
+    <style>
+        body {
+            background-color: #11111b;
+            color: #bac2de;
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            margin: 0;
+        }
+        .terminal {
+            height: 100%;
+            overflow: auto;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal" id="terminal"></div>
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let config = {
+                apiKey: '',
+                endpoint: 'https://jamsapi.hackclub.dev/openai/chat/completions',
+                model: 'gpt-4o-mini'
+            };
+
+            const savedConfig = localStorage.getItem('terminalGPTConfig');
+            if (savedConfig) {
+                try {
+                    config = JSON.parse(savedConfig);
+                } catch (error) {
+                    console.error('Error parsing saved config:', error);
+                }
+            }
+
+            $('#terminal').terminal({
+                help: function() {
+                    this.echo("Available Commands:");
+                    this.echo("1. chat - Start a conversation with GPT");
+                    this.echo("2. config - Configure API settings");
+                    this.echo("3. clear - Clear terminal screen");
+                    this.echo("4. help - Show this help menu");
+                },
+                config: function() {
+                    const terminal = this;
+                    terminal.push(function(input) {
+                        const [command, ...args] = input.split(' ');
+                        
+                        switch(command.toLowerCase()) {
+                            case 'apikey':
+                                if (args.length > 0) {
+                                    config.apiKey = args.join(' ').trim();
+                                    terminal.echo(`API Key updated`);
+                                    localStorage.setItem('terminalGPTConfig', JSON.stringify(config));
+                                } else {
+                                    terminal.echo(`Current API Key: ${config.apiKey ? '***********' : 'Not set'}`);
+                                }
+                                break;
+                            
+                            case 'endpoint':
+                                if (args.length > 0) {
+                                    config.endpoint = args.join(' ').trim();
+                                    terminal.echo(`Endpoint updated to: ${config.endpoint}`);
+                                    localStorage.setItem('terminalGPTConfig', JSON.stringify(config));
+                                } else {
+                                    terminal.echo(`Current Endpoint: ${config.endpoint}`);
+                                }
+                                break;
+                            
+                            case 'model':
+                                if (args.length > 0) {
+                                    config.model = args.join(' ').trim();
+                                    terminal.echo(`Model updated to: ${config.model}`);
+                                    localStorage.setItem('terminalGPTConfig', JSON.stringify(config));
+                                } else {
+                                    terminal.echo(`Current Model: ${config.model}`);
+                                }
+                                break;
+                            
+                            case 'show':
+                                terminal.echo('Current Configuration:');
+                                terminal.echo(`API Key: ${config.apiKey ? '***********' : 'Not set'}`);
+                                terminal.echo(`Endpoint: ${config.endpoint}`);
+                                terminal.echo(`Model: ${config.model}`);
+                                break;
+                            
+                            case 'help':
+                                terminal.echo('Config Command Help:');
+                                terminal.echo('- apikey [key] - Set or view API key');
+                                terminal.echo('- endpoint [url] - Set or view API endpoint');
+                                terminal.echo('- model [model-name] - Set or view AI model');
+                                terminal.echo('- show - Display current configuration');
+                                terminal.echo('- exit - Return to main terminal');
+                                break;
+                            
+                            case 'exit':
+                                terminal.pop();
+                                return;
+                            
+                            default:
+                                terminal.echo(`Unknown config command: ${command}`);
+                                terminal.echo('Type "help" for available config commands');
+                        }
+                    }, {
+                        prompt: 'config> ',
+                        name: 'config'
+                    });
+                },
+                chat: function() {
+                    if (!config.apiKey) {
+                        this.echo('Error: API Key not configured. Use "config" to set your API key.');
+                        return;
+                    }
+
+                    const terminal = this;
+                    terminal.push(async function(input) {
+                        if (input.toLowerCase() === 'exit') {
+                            terminal.pop();
+                            return;
+                        }
+
+                        try {
+                            terminal.echo(`> ${input}`);
+                            terminal.echo("Thinking...");
+
+                            const response = await $.ajax({
+                                url: config.endpoint,
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${config.apiKey}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                data: JSON.stringify({
+                                    model: config.model,
+                                    messages: [{"role": "user", "content": input}]
+                                })
+                            });
+
+                            const aiResponse = response.choices[0].message.content;
+                            terminal.echo(aiResponse);
+                        } catch (error) {
+                            const errorMsg = error.responseJSON 
+                                ? error.responseJSON.error.message 
+                                : 'Your Configration is not vaild or your internet connection is down';
+                            terminal.echo(`Error: ${errorMsg}`);
+                        }
+                    }, {
+                        prompt: 'user> ',
+                        name: 'chat'
+                    });
+                },
+                clear: function() {
+                    this.clear();
+                }
+            }, {
+                greetings: [
+                    'Welcome to Terminal-GPT!',
+                    'Type "help" to see available commands.',
+                    'Use "config" to set up your API key and endpoint.'
+                ].join('\n'),
+                prompt: '> '
+            });
+        });
+    </script>
+</body>
+</html>
